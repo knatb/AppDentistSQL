@@ -8,7 +8,7 @@ namespace ApiDentistSQL.Models
 {
     public class DateModel
     {
-        string ConnectionString = "Server=tcp:azuresqldbklopezserver.database.windows.net,1433;Initial Catalog=azuredentist;Persist Security Info=False;User ID=klopez;Password=Xamar1nklop;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+        string ConnectionString = "Server=tcp:azuresqldbklopezserver.database.windows.net,1433;Initial Catalog=azuredentist;Persist Security Info=False;User ID=klopez;Password={password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
 
         public int IDDate { get; set; }
         public DateTime DayDate { get; set; }
