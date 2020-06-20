@@ -6,40 +6,70 @@ using System.Threading.Tasks;
 
 namespace ApiDentistSQL.Models
 {
-    public class PatientModel
+    public class DatePatientModel
     {
         string ConnectionString = "Server=tcp:azuresqldbklopezserver.database.windows.net,1433;Initial Catalog=azuredentist;Persist Security Info=False;User ID=klopez;Password={password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
 
-        public int IDPatient { get; set; }
-        public string Name { get; set; }
-        public string PictureBase64 { get; set; }
-        public string Process { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        public int idDate { get; set; }
+        public int idPatient { get; set; }
+        public PatientModel Patient { get; set; }
+        public DateModel Dates { get; set; }
 
-        public List<PatientModel> GetAll()
+        public List<DatePatientModel> GetAll()
         {
-            List<PatientModel> list = new List<PatientModel>();
+            List<DatePatientModel> list = new List<DatePatientModel>();
             try
             {
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    string tsql = "getAllPatients";
+                    string tsql = "SELECT * FROM DatePatient";
                     using (SqlCommand cmd = new SqlCommand(tsql, conn))
                     {
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
                             {
-                                list.Add(new PatientModel
+                                list.Add(new DatePatientModel
                                 {
-                                    IDPatient = (int)reader["ID"],
-                                    Name = reader["Name"].ToString(),
-                                    PictureBase64 = reader["PictureBase64"].ToString(),
-                                    Process = reader["Process"].ToString(),
-                                    Latitude = (double)reader["Latitude"],
-                                    Longitude = (double)reader["Longitude"]
+                                    idDate = (int)reader["idDate"],
+                                    idPatient = (int)reader["idPatient"]
+                                });
+                            }
+                        }
+                    }
+                }
+                return list;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public List<DateModel> GetDates(int id)
+        {
+            List<DateModel> list = new List<DateModel>();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ConnectionString))
+                {
+                    conn.Open();
+                    /*cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                      cmd.Parameters.Add(new SqlParameter("@IDProd", id));*/
+                    string tsql = "getDatesFromPatient";
+                    using (SqlCommand cmd = new SqlCommand(tsql, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@IDPatient", id));
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                list.Add(new DateModel
+                                {
+                                    IDDate = (int)reader["ID"],
+                                    DayDate = (DateTime)reader["DayDate"],
+                                    Cost = (double)reader["Cost"],
                                 });
                             }
                         }
@@ -53,46 +83,7 @@ namespace ApiDentistSQL.Models
             }
         }
 
-        public PatientModel Get(int id)
-        
-        {
-            PatientModel patient = new PatientModel();
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(ConnectionString))
-                {
-                    conn.Open();
-                    string tsql = "getPatientByID";
-                    using (SqlCommand cmd = new SqlCommand(tsql, conn))
-                    {
-                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@IDPatient", id));
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                patient = new PatientModel
-                                {
-                                    IDPatient = (int)reader["ID"],
-                                    Name = reader["Name"].ToString(),
-                                    PictureBase64 = reader["PictureBase64"].ToString(),
-                                    Process = reader["Process"].ToString(),
-                                    Latitude = (double)reader["Latitude"],
-                                    Longitude = (double)reader["Longitude"]
-                                };
-                            }
-                        }
-                    }
-                }
-                return patient;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public ApiResponse Insert()
+        public ApiResponse InsertDateToPatient()
         {
             object id;
             try
@@ -100,14 +91,11 @@ namespace ApiDentistSQL.Models
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    using (SqlCommand cmd = new SqlCommand("createPatient", conn))
+                    using (SqlCommand cmd = new SqlCommand("addDateToPatient", conn))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@Name", Name);
-                        cmd.Parameters.AddWithValue("@PictureBase64", PictureBase64);
-                        cmd.Parameters.AddWithValue("@Process", Process);
-                        cmd.Parameters.AddWithValue("@Latitude", Latitude);
-                        cmd.Parameters.AddWithValue("@Longitude", Longitude);
+                        cmd.Parameters.AddWithValue("@IDPatient", idPatient);
+                        cmd.Parameters.AddWithValue("@IDDate", idDate);
                         id = cmd.ExecuteNonQuery();
                     }
                 }
@@ -117,7 +105,7 @@ namespace ApiDentistSQL.Models
                     {
                         IsSuccess = true,
                         Result = int.Parse(id.ToString()),
-                        Message = "EXCELSIOR, Paciente creado"
+                        Message = "EXCELSIOR, Cita asignada al paciente: " + idPatient
                     };
                     //return int.Parse(id.ToString());
                 }
@@ -144,65 +132,28 @@ namespace ApiDentistSQL.Models
             }
         }
 
-        public ApiResponse Update(int id)
+        public ApiResponse DeleteDateFromPatient(DatePatientModel dp)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    using (SqlCommand cmd = new SqlCommand("updatePatient", conn))
-                    {
-                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@ID", id);
-                        cmd.Parameters.AddWithValue("@Name", Name);
-                        cmd.Parameters.AddWithValue("@PictureBase64", PictureBase64);
-                        cmd.Parameters.AddWithValue("@Process", Process);
-                        cmd.Parameters.AddWithValue("@Latitude", Latitude);
-                        cmd.Parameters.AddWithValue("@Longitude", Longitude);
-                        id = cmd.ExecuteNonQuery();
-                    }
-                }
-                return new ApiResponse
-                {
-                    IsSuccess = true,
-                    Result = IDPatient,
-                    Message = "EXCELSIOR, Paciente actualizado"
-                };
-            }
-            catch (Exception exc)
-            {
-                return new ApiResponse
-                {
-                    IsSuccess = false,
-                    Result = null,
-                    Message = exc.Message
-                };
-                throw;
-            }
-        }
-
-        public ApiResponse Delete(int id)
-        {
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(ConnectionString))
-                {
-                    conn.Open();
-                    string tsql = "deletePatient";
+                    string tsql = "deleteDateToPatient";
 
                     using (SqlCommand cmd = new SqlCommand(tsql, conn))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@IDPatient", id);
+                        cmd.Parameters.AddWithValue("@IDDate", dp.idDate);
+                        cmd.Parameters.AddWithValue("@IDPatient", dp.idPatient);
                         cmd.ExecuteNonQuery();
                     }
                 }
                 return new ApiResponse
                 {
                     IsSuccess = true,
-                    Result = id,
-                    Message = "EXCELSIOR, Paciente eliminado"
+                    Result = dp.idDate,
+                    Message = "EXCELSIOR, Cita removida del Paciente: " + dp.idPatient
                 };
             }
             catch (Exception exc)

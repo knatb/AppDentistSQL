@@ -55,9 +55,10 @@ namespace ApiDentistSQL.Models
                 using (SqlConnection conn = new SqlConnection(ConnectionString))
                 {
                     conn.Open();
-                    string tsql = "SELECT * FROM Dates WHERE Dates.ID = @IDDate;";
+                    string tsql = "getDateByID";
                     using (SqlCommand cmd = new SqlCommand(tsql, conn))
                     {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.AddWithValue("@IDDate", id);
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
